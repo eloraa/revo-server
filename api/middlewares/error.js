@@ -1,9 +1,9 @@
 const httpStatus = require('http-status');
-const expressValidation = require('express-validation');
 const APIError = require('../errors/api-error');
 const {
   env
 } = require('../../config/vars');
+const { ValidationError } = require('express-validation');
 
 /**
  * Error handler. Send stacktrace only during development
@@ -31,12 +31,13 @@ exports.handler = handler;
 exports.converter = (err, req, res, next) => {
   let convertedError = err;
 
-  if (err instanceof expressValidation.ValidationError) {
+  if (err instanceof ValidationError) {
+    console.log(err);
     convertedError = new APIError({
       message: 'Validation Error',
-      errors: err.errors,
+      errors: err.error,
       status: err.status,
-      stack: err.stack,
+      stack: err.details,
     });
   } else if (!(err instanceof APIError)) {
     convertedError = new APIError({
