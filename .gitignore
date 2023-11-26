@@ -1,5 +1,6 @@
 dist
 node_modules
+config/firebase
 .env
 /*.log
 yarn-error.log
