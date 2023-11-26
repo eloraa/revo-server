@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema(
             trim: true,
             lowercase: true,
         },
+        name: {
+            type: String,
+            min: 3,
+            max: 50,
+        },
         subscribed: {
             type: Boolean,
             default: false,
@@ -65,6 +70,7 @@ userSchema.method({
         const payload = {
             exp: moment().add(jwtExpirationInterval, "minutes").unix(),
             iat: moment().unix(),
+            email: this.email,
             sub: this.uid,
         };
         return jwt.sign(payload, jwtSecret);

@@ -20,6 +20,6 @@ router
 router
     .route("/update-user")
 
-    .post(validate(user), authorize(LOGGED_USER), controller.add);
+    .post(validate(user), authorize(LOGGED_USER), controller.update);
 
 module.exports = router;

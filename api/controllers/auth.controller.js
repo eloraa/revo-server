@@ -7,10 +7,32 @@ exports.add = async (req, res, next) => {
         const userData = pick(
             omit(req.body, "role", "subscribed"),
             "email",
+            "name",
             "uid",
             "photoURL"
         );
         const user = await new User(userData).save();
+        const token = user.token();
+        res.status(httpStatus.CREATED);
+        return res.json({
+            token,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.update = async (req, res, next) => {
+    try {
+        console.log(req.user, "hooo");
+        let userData;
+
+        if (req.user.role !== "admin") {
+            userData = pick("name", "photoURL");
+        } else {
+            userData = pick(req.body, "role", "subscribed", "name", "photoURL");
+        }
+        const user = await User.updateOne({}, userData);
         const token = user.token();
         res.status(httpStatus.CREATED);
         return res.json({
