@@ -17,4 +17,13 @@ module.exports = {
             role: Joi.string().valid(...roles),
         }),
     },
+    claims: {
+        body: Joi.object({
+            email: Joi.string().email().required(),
+            uid: Joi.string().min(5).required(),
+            role: Joi.string().valid(...roles).required(),
+            userEmail: Joi.string().email().required(),
+            userUID: Joi.string().min(5).required(),
+        }),
+    },
 };

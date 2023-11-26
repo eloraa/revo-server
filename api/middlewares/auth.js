@@ -14,14 +14,19 @@ const handleJWT = (req, res, next, roles) => async () => {
         status: httpStatus.UNAUTHORIZED,
     });
 
-
     try {
         const user = await User.get(req.body);
         if (user) {
-            if (
-                roles !== user.role ||
-                !(await user.userMatches(req.auth.sub))
-            ) {
+            if (roles === NORMAL_USER || roles === MOD || roles === ADMIN) {
+                req.user = user;
+                return next();
+            } else if (roles === ADMIN) {
+                if (user.role !== ADMIN) {
+                    apiError.status = httpStatus.FORBIDDEN;
+                    apiError.message = "Forbidden";
+                    return next(apiError);
+                }
+            } else {
                 apiError.status = httpStatus.FORBIDDEN;
                 apiError.message = "Forbidden";
                 return next(apiError);

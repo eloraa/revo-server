@@ -1,9 +1,9 @@
 const express = require("express");
 const controller = require("../../controllers/auth.controller");
 
-const { user } = require("../../validations/auth.validation");
+const { user, claims } = require("../../validations/auth.validation");
 const { validate } = require("express-validation");
-const { authorize, LOGGED_USER } = require("../../middlewares/auth");
+const { authorize, LOGGED_USER, ADMIN } = require("../../middlewares/auth");
 
 const router = express.Router();
 
@@ -20,6 +20,11 @@ router
 router
     .route("/update-user")
 
-    .post(validate(user), authorize(LOGGED_USER), controller.update);
+    .patch(validate(user), authorize(LOGGED_USER), controller.update);
+
+router
+    .route("/claims")
+
+    .patch(validate(claims), authorize(ADMIN), controller.claims);
 
 module.exports = router;
