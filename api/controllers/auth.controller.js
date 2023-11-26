@@ -24,15 +24,17 @@ exports.add = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
     try {
-        console.log(req.user, "hooo");
         let userData;
 
         if (req.user.role !== "admin") {
-            userData = pick("name", "photoURL");
+            userData = pick(req.body, "name", "photoURL");
         } else {
             userData = pick(req.body, "role", "subscribed", "name", "photoURL");
         }
-        const user = await User.updateOne({}, userData);
+        const user = await User.findOneAndUpdate(
+            { uid: req.body.uid, email: req.body.email },
+            userData
+        );
         const token = user.token();
         res.status(httpStatus.CREATED);
         return res.json({
@@ -45,7 +47,7 @@ exports.update = async (req, res, next) => {
 
 exports.sign = async (req, res, next) => {
     try {
-        const { token } = await User.findAndGenerateToken(req.body);
+        const { token } = await User.findAndGenerateToken(pick(req.body, "email", "uid"));
         return res.json({
             token,
         });
