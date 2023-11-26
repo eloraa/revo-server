@@ -4,7 +4,9 @@ const { roles } = require("../../config/vars");
 module.exports = {
     user: {
         body: Joi.object({
-            email: Joi.string().email().required(),
+            email: Joi.string()
+                .email({ tlds: { allow: false } })
+                .required(),
             name: Joi.string().min(1).max(50).allow("").allow(null),
             uid: Joi.string().min(5).required(),
             photoURL: Joi.string()
@@ -19,9 +21,13 @@ module.exports = {
     },
     claims: {
         body: Joi.object({
-            email: Joi.string().email().required(),
+            email: Joi.string()
+                .email({ tlds: { allow: false } })
+                .required(),
             uid: Joi.string().min(5).required(),
-            role: Joi.string().valid(...roles).required(),
+            role: Joi.string()
+                .valid(...roles)
+                .required(),
             userEmail: Joi.string().email().required(),
             userUID: Joi.string().min(5).required(),
         }),
