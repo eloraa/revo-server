@@ -9,8 +9,7 @@ admin.initializeApp({
 
 exports.setCustomClaims = async (claim, email, value, nooverride) => {
     const user = await admin.auth().getUserByEmail(email);
-    console.log(user.customClaims[claim], value, claim);
-    if (user.customClaims[claim] === value) {
+    if (user.customClaims && user.customClaims[claim] === value) {
         return;
     }
     if (!nooverride) {

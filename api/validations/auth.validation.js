@@ -15,7 +15,6 @@ module.exports = {
                 })
                 .allow("")
                 .allow(null),
-            subscribed: Joi.bool(),
             role: Joi.string().valid(...roles),
         }),
     },

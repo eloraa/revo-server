@@ -48,12 +48,53 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+userSchema.pre("findOneAndUpdate", async function (next) {
+    const filter = this.getFilter();
+    const update = this.getUpdate();
+
+    if (update && update.subscribed) {
+        const pipeline = [
+            {
+                $match: filter,
+            },
+            {
+                $lookup: {
+                    from: "payments",
+                    localField: "uid",
+                    foreignField: "uid",
+                    as: "payment",
+                },
+            },
+            {
+                $match: { "payment.uid": filter.uid },
+            },
+        ];
+
+        const users = await mongoose
+            .model("User", userSchema)
+            .aggregate(pipeline);
+
+        console.log(users, "users");
+
+        if (users.length === 0) {
+            return next(
+                new APIError({
+                    message: "User did not payment",
+                })
+            );
+        }
+    }
+
+    next();
+});
+
 userSchema.method({
     transform() {
         const transformed = {};
         const fields = [
             "id",
             "email",
+            "name",
             "subscribed",
             "uid",
             "role",

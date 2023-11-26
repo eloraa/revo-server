@@ -30,7 +30,10 @@ exports.update = async (req, res, next) => {
         if (req.user.role !== "admin") {
             userData = pick(req.body, "name", "photoURL");
         } else {
-            userData = pick(req.body, "role", "subscribed", "name", "photoURL");
+            userData = pick(req.body, "role", "name", "photoURL");
+
+            if (userData.role)
+                await setCustomClaims(userData.role, req.body.email, true);
         }
         const user = await User.findOneAndUpdate(
             { uid: req.body.uid, email: req.body.email },
@@ -55,7 +58,7 @@ exports.claims = async (req, res, next) => {
             userData
         );
         if (user.modifiedCount) {
-            await setCustomClaims(userData.role, req.body.userEmail, true)
+            await setCustomClaims(userData.role, req.body.userEmail, true);
             res.status(httpStatus.CREATED);
             return res.json({
                 success: true,
