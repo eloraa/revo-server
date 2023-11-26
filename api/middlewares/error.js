@@ -32,7 +32,6 @@ exports.converter = (err, req, res, next) => {
   let convertedError = err;
 
   if (err instanceof ValidationError) {
-    console.log(err);
     convertedError = new APIError({
       message: 'Validation Error',
       errors: err.error,

@@ -11,12 +11,21 @@ exports.add = async (req, res, next) => {
             "photoURL"
         );
         const user = await new User(userData).save();
-        const userTransformed = user.transform();
         const token = user.token();
         res.status(httpStatus.CREATED);
         return res.json({
             token,
-            user: userTransformed,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.sign = async (req, res, next) => {
+    try {
+        const { token } = await User.findAndGenerateToken(req.body);
+        return res.json({
+            token,
         });
     } catch (error) {
         return next(error);

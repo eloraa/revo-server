@@ -79,11 +79,14 @@ userSchema.method({
 
 userSchema.statics = {
     roles,
-    async get(uid) {
+    async get(options) {
         let user;
 
         try {
-            user = await this.findById(uid).exec();
+            user = await this.findOne({
+                uid: options.uid,
+                email: options.email,
+            }).exec();
         } catch (error) {
             throw error;
         }
@@ -95,6 +98,31 @@ userSchema.statics = {
             message: "User does not exist",
             status: httpStatus.NOT_FOUND,
         });
+    },
+    async findAndGenerateToken(options) {
+        const { email, uid } = options;
+        if (!email || !uid) {
+            throw new APIError({
+                message: "An email and uid is required to generate a token",
+            });
+        }
+
+        const user = await this.findOne({
+            email,
+            uid,
+        }).exec();
+        const err = {
+            status: httpStatus.UNAUTHORIZED,
+            isPublic: true,
+        };
+        if (user) {
+            return {
+                user,
+                token: user.token(),
+            };
+        }
+        err.message = "Incorrect email or uid";
+        throw new APIError(err);
     },
 };
 
