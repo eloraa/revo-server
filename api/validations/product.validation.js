@@ -15,4 +15,11 @@ module.exports = {
             uid: Joi.string().min(5).required(),
         }),
     },
+    deletes: {
+        params: Joi.object({
+            id: Joi.string()
+                .regex(/^[a-fA-F0-9]{24}$/)
+                .required(),
+        }),
+    },
 };

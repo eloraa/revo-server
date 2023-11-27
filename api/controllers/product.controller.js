@@ -23,3 +23,22 @@ exports.add = async (req, res, next) => {
         return next(error);
     }
 };
+
+exports.delete = async (req, res, next) => {
+    try {
+        const result = await Product.deleteOne({ _id: req.params.id });
+        if (result.deletedCount) {
+            res.status(httpStatus.CREATED);
+            return res.json({
+                success: true,
+            });
+        } else {
+            res.status(httpStatus.NOT_MODIFIED);
+            return res.json({
+                success: false,
+            });
+        }
+    } catch (error) {
+        return next(error);
+    }
+};

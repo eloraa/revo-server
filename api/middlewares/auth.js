@@ -28,34 +28,31 @@ const handleJWT = (req, res, next, roles) => async () => {
 
         if (user) {
             if (
-                (roles === NORMAL_USER ||
-                    roles === MOD ||
-                    (roles === ADMIN && roles === user.role)) &&
+                ((roles === NORMAL_USER &&
+                    (user.role === NORMAL_USER ||
+                        user.role === MOD ||
+                        user.role === ADMIN)) ||
+                    (roles === MOD &&
+                        (user.role === MOD || user.role === ADMIN)) ||
+                    (roles === ADMIN && user.role === ADMIN)) &&
                 (await user.userMatches(req.auth.sub))
             ) {
                 req.user = user;
                 return next();
-            } else if (roles === ADMIN) {
-                if (user.role !== ADMIN) {
-                    apiError.status = httpStatus.FORBIDDEN;
-                    apiError.message = "Forbidden";
-                    return next(apiError);
-                }
+            } else if (!roles.includes(user.role)) {
+                apiError.status = httpStatus.FORBIDDEN;
+                apiError.message = "Forbidden";
+                return next(apiError);
             } else {
                 apiError.status = httpStatus.FORBIDDEN;
                 apiError.message = "Forbidden";
                 return next(apiError);
             }
-        } else if (!roles.includes(user.role)) {
+        } else {
             apiError.status = httpStatus.FORBIDDEN;
             apiError.message = "Forbidden";
             return next(apiError);
-        } else if (err || !user) {
-            return next(apiError);
         }
-
-        req.user = user;
-        return next();
     } catch (e) {
         return next(apiError);
     }
