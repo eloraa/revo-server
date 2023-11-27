@@ -31,14 +31,14 @@ const productSchema = new mongoose.Schema(
             default: [],
             required: true,
         },
-        userEmail: {
+        email: {
             type: String,
             match: /^\S+@\S+\.\S+$/,
             required: true,
             trim: true,
             lowercase: true,
         },
-        userUID: {
+        uid: {
             type: String,
             trim: true,
             required: true,
@@ -63,22 +63,16 @@ const productSchema = new mongoose.Schema(
 
 productSchema.pre("save", async function save(next) {
     try {
-        const userEmail = this.userEmail;
-        const userUID = this.userUID;
-
         const pipeline = [
             {
                 $match: {
-                    $or: [
-                        { userEmail: userEmail },
-                        { userUID: userUID },
-                    ],
+                    $or: [{ email: this.email }, { uid: this.uid }],
                 },
             },
             {
                 $lookup: {
                     from: "users",
-                    localField: "userUID",
+                    localField: "uid",
                     foreignField: "uid",
                     as: "user",
                 },
@@ -95,13 +89,15 @@ productSchema.pre("save", async function save(next) {
             },
         ];
 
-        const [result] = await mongoose.model("Product", productSchema).aggregate(pipeline);
-
+        const [result] = await mongoose
+            .model("Product", productSchema)
+            .aggregate(pipeline);
 
         if (result && !result.subscribed && result.productCount >= 1) {
             return next(
                 new APIError({
-                    message: "User is not subscribed and can only add one product",
+                    message:
+                        "User is not subscribed and can only add one product",
                 })
             );
         }
@@ -121,9 +117,9 @@ productSchema.method({
             "productPhoto",
             "description",
             "productLink",
-            "userEmail",
-            "userUID",
-            "userName",
+            "email",
+            "uid",
+            "name",
             "approved",
             "upvote",
             "downvote",
@@ -138,14 +134,60 @@ productSchema.method({
     },
 });
 
+productSchema.post("find", async function (docs, next) {
+    try {
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "uid",
+                    foreignField: "uid",
+                    as: "userDetails",
+                },
+            },
+            {
+                $unwind: "$userDetails",
+            },
+            {
+                $addFields: {
+                    userDetails: {
+                        uid: "$userDetails.uid",
+                        email: "$userDetails.email",
+                        name: "$userDetails.name",
+                        userPhoto: "$userDetails.photoURL",
+                    },
+                },
+            },
+        ];
+
+        const updatedProducts = await mongoose
+            .model("Product")
+            .aggregate(pipeline);
+
+        updatedProducts.forEach((product) => {
+            const originalProductIndex = docs.findIndex((doc) =>
+                doc._id.equals(product._id)
+            );
+
+            if (originalProductIndex !== -1) {
+                docs[originalProductIndex] = product;
+            }
+        });
+
+        return next();
+    } catch (error) {
+        return next(error);
+    }
+});
+
 productSchema.statics = {
     async get(options) {
         let products;
 
         try {
             products = await this.find({
-                userUID: options.userUID,
-                userEmail: options.userEmail,
+                uid: options.uid,
+                email: options.email,
             }).exec();
         } catch (error) {
             throw error;

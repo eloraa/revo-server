@@ -33,4 +33,12 @@ module.exports = {
             userUID: Joi.string().min(5).required(),
         }),
     },
+    get: {
+        query: Joi.object({
+            email: Joi.string()
+                .email({ tlds: { allow: false } })
+                .required(),
+            uid: Joi.string().min(5).required(),
+        }),
+    },
 };

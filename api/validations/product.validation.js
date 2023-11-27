@@ -9,10 +9,10 @@ module.exports = {
             description: Joi.string().min(1).max(300).required(),
             productLink: Joi.string().uri().required(),
             tags: Joi.array().required(),
-            userEmail: Joi.string()
+            email: Joi.string()
                 .email({ tlds: { allow: false } })
                 .required(),
-            userUID: Joi.string().min(5).required(),
+            uid: Joi.string().min(5).required(),
         }),
     },
 };
