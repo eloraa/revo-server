@@ -70,7 +70,7 @@ exports.claims = async (req, res, next) => {
             { auth: req.auth }
         );
         if (user.modifiedCount) {
-            await setCustomClaims(userData.role, req.body.userEmail, true);
+            setCustomClaims(userData.role, req.body.userEmail, true);
             res.status(httpStatus.CREATED);
             return res.json({
                 success: true,
