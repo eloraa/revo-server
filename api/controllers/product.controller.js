@@ -3,7 +3,8 @@ const Product = require("../models/product.model");
 
 exports.get = async (req, res, next) => {
     try {
-        const products = await Product.get(req.query);
+        const _products = await Product.get(req.query);
+        const products = _products.map((product) => product.transform());
 
         return res.json(products);
     } catch (error) {

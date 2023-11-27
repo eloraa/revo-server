@@ -58,8 +58,17 @@ const productSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
+
+productSchema.virtual("user", {
+    ref: "User",
+    localField: "uid",
+    foreignField: "uid",
+    justOne: true,
+});
 
 productSchema.pre("save", async function save(next) {
     try {
@@ -117,12 +126,11 @@ productSchema.method({
             "productPhoto",
             "description",
             "productLink",
-            "email",
-            "uid",
-            "name",
             "approved",
+            "tags",
             "upvote",
             "downvote",
+            "user",
             "createdAt",
         ];
 
@@ -134,51 +142,51 @@ productSchema.method({
     },
 });
 
-productSchema.post("find", async function (docs, next) {
-    try {
-        const pipeline = [
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "uid",
-                    foreignField: "uid",
-                    as: "userDetails",
-                },
-            },
-            {
-                $unwind: "$userDetails",
-            },
-            {
-                $addFields: {
-                    userDetails: {
-                        uid: "$userDetails.uid",
-                        email: "$userDetails.email",
-                        name: "$userDetails.name",
-                        userPhoto: "$userDetails.photoURL",
-                    },
-                },
-            },
-        ];
+// productSchema.post("find", async function (docs, next) {
+//     try {
+//         const pipeline = [
+//             {
+//                 $lookup: {
+//                     from: "users",
+//                     localField: "uid",
+//                     foreignField: "uid",
+//                     as: "userDetails",
+//                 },
+//             },
+//             {
+//                 $unwind: "$userDetails",
+//             },
+//             {
+//                 $addFields: {
+//                     userDetails: {
+//                         uid: "$userDetails.uid",
+//                         email: "$userDetails.email",
+//                         name: "$userDetails.name",
+//                         userPhoto: "$userDetails.photoURL",
+//                     },
+//                 },
+//             },
+//         ];
 
-        const updatedProducts = await mongoose
-            .model("Product")
-            .aggregate(pipeline);
+//         const updatedProducts = await mongoose
+//             .model("Product")
+//             .aggregate(pipeline);
 
-        updatedProducts.forEach((product) => {
-            const originalProductIndex = docs.findIndex((doc) =>
-                doc._id.equals(product._id)
-            );
+//         updatedProducts.forEach((product) => {
+//             const originalProductIndex = docs.findIndex((doc) =>
+//                 doc._id.equals(product._id)
+//             );
 
-            if (originalProductIndex !== -1) {
-                docs[originalProductIndex] = product;
-            }
-        });
+//             if (originalProductIndex !== -1) {
+//                 docs[originalProductIndex] = product;
+//             }
+//         });
 
-        return next();
-    } catch (error) {
-        return next(error);
-    }
-});
+//         return next();
+//     } catch (error) {
+//         return next(error);
+//     }
+// });
 
 productSchema.statics = {
     async get(options) {
@@ -188,7 +196,9 @@ productSchema.statics = {
             products = await this.find({
                 uid: options.uid,
                 email: options.email,
-            }).exec();
+            })
+                .populate("user")
+                .exec();
         } catch (error) {
             throw error;
         }
