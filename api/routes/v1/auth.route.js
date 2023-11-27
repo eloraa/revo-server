@@ -6,6 +6,10 @@ const { validate } = require("express-validation");
 const { authorize, LOGGED_USER, ADMIN } = require("../../middlewares/auth");
 
 const router = express.Router();
+router
+    .route("/users")
+
+    .get(authorize(ADMIN), controller.list);
 
 router
     .route("/signin")

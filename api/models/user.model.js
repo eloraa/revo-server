@@ -74,12 +74,76 @@ userSchema.pre("findOneAndUpdate", async function (next) {
             .model("User", userSchema)
             .aggregate(pipeline);
 
-        console.log(users, "users");
-
         if (users.length === 0) {
             return next(
                 new APIError({
                     message: "User did not payment",
+                })
+            );
+        }
+    }
+
+    if (update && update.role) {
+        const pipeline = [
+            {
+                $match: {
+                    role: "admin",
+                },
+            },
+            {
+                $limit: 1,
+            },
+        ];
+
+        const users = await mongoose
+            .model("User", userSchema)
+            .aggregate(pipeline);
+
+        console.log(users);
+
+        if (users.length === 1) {
+            return next(
+                new APIError({
+                    message: "There should be at least one admin",
+                })
+            );
+        }
+    }
+
+    next();
+});
+
+userSchema.pre("updateOne", async function (next) {
+    const query = this.getQuery();
+    const update = this.getUpdate();
+    const auth = this.options?.auth;
+
+    console.log("\n\n\n\n\n", query, auth, "\n\n\n");
+
+    if (update && update.role && update.role !== "admin") {
+        const pipeline = [
+            {
+                $match: {
+                    role: "admin",
+                },
+            },
+            {
+                $limit: 2,
+            },
+        ];
+
+        const users = await mongoose
+            .model("User", userSchema)
+            .aggregate(pipeline);
+
+        if (
+            users.length === 1 &&
+            auth.email === query.email &&
+            auth.sub === query.uid
+        ) {
+            return next(
+                new APIError({
+                    message: "There should be at least one admin",
                 })
             );
         }

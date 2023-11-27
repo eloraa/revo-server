@@ -15,9 +15,13 @@ const handleJWT = (req, res, next, roles) => async () => {
     });
 
     try {
-        const user = await User.get(req.body);
+        const user = await User.get(
+            req.body?.uid
+                ? req.body
+                : { uid: req.auth?.sub, email: req.auth.email }
+        );
         if (user) {
-            if (roles === NORMAL_USER || roles === MOD || roles === ADMIN) {
+            if (roles === NORMAL_USER || roles === MOD || roles === ADMIN && roles === user.role) {
                 req.user = user;
                 return next();
             } else if (roles === ADMIN) {

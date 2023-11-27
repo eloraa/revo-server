@@ -27,7 +27,9 @@ module.exports = {
             role: Joi.string()
                 .valid(...roles)
                 .required(),
-            userEmail: Joi.string().email().required(),
+            userEmail: Joi.string()
+                .email({ tlds: { allow: false } })
+                .required(),
             userUID: Joi.string().min(5).required(),
         }),
     },

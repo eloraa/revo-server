@@ -3,6 +3,17 @@ const httpStatus = require("http-status");
 const { omit, pick } = require("lodash");
 const { setCustomClaims } = require("../../config/firebase");
 
+exports.list = async (req, res, next) => {
+    try {
+        const users = await User.find();
+        const transformedUsers = users.map((user) => user.transform());
+
+        return res.json(transformedUsers);
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.add = async (req, res, next) => {
     try {
         const userData = pick(
@@ -55,7 +66,8 @@ exports.claims = async (req, res, next) => {
 
         const user = await User.updateOne(
             { uid: req.body.userUID, email: req.body.userEmail },
-            userData
+            userData,
+            { auth: req.auth }
         );
         if (user.modifiedCount) {
             await setCustomClaims(userData.role, req.body.userEmail, true);

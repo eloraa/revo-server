@@ -46,9 +46,9 @@ paymentSchema.post("save", async function save(doc, next) {
             { subscribed: true }
         );
         if (user.isModified) {
-            await setCustomClaims("subscribed", this.email, true, true);
+            setCustomClaims("subscribed", this.email, true);
         }
-        return next()
+        return next();
     } catch (error) {
         return next(error);
     }
