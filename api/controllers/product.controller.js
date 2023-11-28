@@ -17,7 +17,8 @@ exports.list = async (req, res, next) => {
             "tag",
             "uid",
             "email",
-            "status"
+            "status",
+            "limit"
         );
 
         const { userUID, userEmail } = req.params;
@@ -30,9 +31,20 @@ exports.list = async (req, res, next) => {
             filteredParams.email = userEmail;
         }
 
-        const query = mapValues(filteredParams, (value) => value);
+        const query = mapValues(filteredParams, (value) => {
+            if (
+                value.toLowerCase() === "true" ||
+                value.toLowerCase() === "false"
+            ) {
+                return value.toLowerCase() === "true";
+            } else if (!isNaN(value)) {
+                return Number(value);
+            } else {
+                return value;
+            }
+        });
 
-        // Set default status to "approved" if not provided
+
         const statusValue = queryParams.status || "approved";
         if (statusValue !== "all") {
             query.status = statusValue;
@@ -44,7 +56,7 @@ exports.list = async (req, res, next) => {
 
         if (sortField && Array.isArray(sortField)) {
             const [field, value] = sortField;
-            if (!isNaN(value)) sortObject[field] = value;
+            if (!isNaN(value)) sortObject[field] = Number(value);
             else postSort = { field, value };
         } else {
             sortObject[sortField] = sortOrder;
@@ -57,10 +69,17 @@ exports.list = async (req, res, next) => {
             };
         }
 
-        let _products = await Product.find(query)
-            .sort({})
-            .populate("user")
-            .exec();
+        let queryBuilder = Product.find(query)
+            .sort(sortObject)
+            .populate("user");
+
+        const limitValue = queryParams.limit;
+        if (limitValue) {
+            const limit = parseInt(limitValue, 10);
+            queryBuilder = queryBuilder.limit(limit);
+        }
+
+        let _products = await queryBuilder.exec();
 
         if (postSort) {
             console.log(sortDirection);
