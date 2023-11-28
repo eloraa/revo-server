@@ -3,10 +3,13 @@ const User = require("../models/user.model");
 const APIError = require("../errors/api-error");
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../../config/vars");
+const Joi = require("joi");
+const { has, keys, get, difference } = require("lodash");
 
 const ADMIN = "admin";
 const MOD = "moderator";
 const NORMAL_USER = "normal";
+const FORCE = "_FORCE";
 
 const handleJWT = (req, res, next, roles) => async () => {
     const apiError = new APIError({
@@ -58,7 +61,32 @@ const handleJWT = (req, res, next, roles) => async () => {
     }
 };
 
-const authenticate = (req, res, next) => {
+const validateSchema = (req, schema) => {
+    const schemaType = Object.keys(schema)[0];
+
+    if (req[schemaType] && Object.keys(req[schemaType]).length > 0) {
+        const schemaProperties = Object.keys(
+            schema[schemaType].describe().keys
+        );
+
+        const isValid = schemaProperties.every((property) =>
+            req[schemaType].hasOwnProperty(property)
+        );
+
+        if (isValid) return true;
+        else return false;
+    }
+
+    return false;
+};
+
+const authenticate = (req, res, next, roles, options) => {
+    console.log(
+        validateSchema(req, options.schema),
+        req.query,
+        "validation sucks"
+    );
+
     if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
     }
@@ -76,8 +104,9 @@ const authenticate = (req, res, next) => {
 exports.ADMIN = ADMIN;
 exports.MODERATOR = MOD;
 exports.LOGGED_USER = NORMAL_USER;
+exports.FORCED = FORCE;
 
 exports.authorize =
-    (roles = User.roles) =>
+    (roles = User.roles, obj = {}) =>
     (req, res, next) =>
-        authenticate(req, res, handleJWT(req, res, next, roles));
+        authenticate(req, res, handleJWT(req, res, next), roles, obj);

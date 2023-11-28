@@ -22,4 +22,9 @@ module.exports = {
                 .required(),
         }),
     },
+    status: {
+        query: Joi.object({
+            status: Joi.string().valid("pending", "approved", "rejected"),
+        }).unknown(true),
+    },
 };
