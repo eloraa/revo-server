@@ -18,7 +18,8 @@ exports.list = async (req, res, next) => {
             "uid",
             "email",
             "status",
-            "limit"
+            "limit",
+            "pagination"
         );
 
         const { userUID, userEmail } = req.params;
@@ -43,7 +44,6 @@ exports.list = async (req, res, next) => {
                 return value;
             }
         });
-
 
         const statusValue = queryParams.status || "approved";
         if (statusValue !== "all") {
@@ -73,9 +73,27 @@ exports.list = async (req, res, next) => {
             .sort(sortObject)
             .populate("user");
 
+        const paginationValue = queryParams.pagination;
         const limitValue = queryParams.limit;
-        if (limitValue) {
-            const limit = parseInt(limitValue, 10);
+        let usePagination = false;
+        let limit;
+
+        if (
+            paginationValue &&
+            paginationValue.toLowerCase() === "true" &&
+            limitValue
+        ) {
+            usePagination = true;
+            limit = parseInt(limitValue, 10);
+            queryBuilder = queryBuilder.limit(limit);
+
+            if (usePagination) {
+                const page = parseInt(queryParams.page, 10) || 1;
+                queryBuilder = queryBuilder.skip((page - 1) * limit);
+            }
+        } else if (limitValue) {
+            // Handle the case when pagination is not requested
+            limit = parseInt(limitValue, 10);
             queryBuilder = queryBuilder.limit(limit);
         }
 
@@ -99,7 +117,19 @@ exports.list = async (req, res, next) => {
 
         const products = _products.map((product) => product.transform());
 
-        return res.json(products);
+        if (usePagination) {
+            const totalProducts = await Product.countDocuments(query).exec();
+            const totalPages = Math.ceil(totalProducts / limit);
+            const paginationData = {
+                page: parseInt(queryParams.page, 10) || 1,
+                limit,
+                totalProducts,
+                totalPages,
+            };
+            return res.json({ products, pagination: paginationData });
+        } else {
+            return res.json(products);
+        }
     } catch (error) {
         next(error);
     }
