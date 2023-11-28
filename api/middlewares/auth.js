@@ -11,11 +11,33 @@ const MOD = "moderator";
 const NORMAL_USER = "normal";
 const FORCE = "_FORCE";
 
-const handleJWT = (req, res, next, roles) => async () => {
+const validateSchema = (req, schema) => {
+    const schemaType = Object.keys(schema)[0];
+
+    if (req[schemaType] && Object.keys(req[schemaType]).length > 0) {
+        const schemaProperties = Object.keys(
+            schema[schemaType].describe().keys
+        );
+
+        const isValid = schemaProperties.every((property) =>
+            req[schemaType].hasOwnProperty(property)
+        );
+
+        if (isValid) return true;
+        else return false;
+    }
+
+    return false;
+};
+
+const handleJWT = (req, res, next, roles, options) => async () => {
     const apiError = new APIError({
         message: "Unauthorized",
         status: httpStatus.UNAUTHORIZED,
     });
+
+    if (roles === FORCE && !validateSchema(req, options?.schema)) return next();
+    else roles = options?.roles || roles;
 
     try {
         const user = await User.get(
@@ -61,31 +83,10 @@ const handleJWT = (req, res, next, roles) => async () => {
     }
 };
 
-const validateSchema = (req, schema) => {
-    const schemaType = Object.keys(schema)[0];
-
-    if (req[schemaType] && Object.keys(req[schemaType]).length > 0) {
-        const schemaProperties = Object.keys(
-            schema[schemaType].describe().keys
-        );
-
-        const isValid = schemaProperties.every((property) =>
-            req[schemaType].hasOwnProperty(property)
-        );
-
-        if (isValid) return true;
-        else return false;
-    }
-
-    return false;
-};
-
 const authenticate = (req, res, next, roles, options) => {
-    console.log(
-        validateSchema(req, options.schema),
-        req.query,
-        "validation sucks"
-    );
+    if (roles === FORCE && validateSchema(req, options.schema))
+        roles = options.roles;
+    else return next();
 
     if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
@@ -109,4 +110,10 @@ exports.FORCED = FORCE;
 exports.authorize =
     (roles = User.roles, obj = {}) =>
     (req, res, next) =>
-        authenticate(req, res, handleJWT(req, res, next), roles, obj);
+        authenticate(
+            req,
+            res,
+            handleJWT(req, res, next, roles, obj),
+            roles,
+            obj
+        );
