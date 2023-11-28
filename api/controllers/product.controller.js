@@ -102,7 +102,12 @@ exports.getOne = async (req, res, next) => {
         const product = (
             await Product.findOne({ _id: req.params.id }).populate("user")
         ).transform();
-        if (product.status === "approved" || req.query.hasToken)
+        if (
+            product.status === "approved" ||
+            (req.query.hasToken &&
+                product.user.email === req.auth.email &&
+                product.user.uid === req.auth.uid)
+        )
             return res.json(product);
         else return res.json(null);
     } catch (error) {
