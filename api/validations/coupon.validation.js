@@ -1,5 +1,4 @@
 const Joi = require("joi");
-const { roles } = require("../../config/vars");
 
 module.exports = {
     add: {
