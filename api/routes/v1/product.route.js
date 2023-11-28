@@ -12,6 +12,7 @@ const {
     product,
     deletes,
     status,
+    set,
 } = require("../../validations/product.validation");
 const { get } = require("../../validations/auth.validation");
 
@@ -45,5 +46,10 @@ router
         authorize(LOGGED_USER),
         controller.delete
     );
+
+router
+    .route("/set-status/:id")
+
+    .patch(authorize(MODERATOR), validate(set), controller.set);
 
 module.exports = router;

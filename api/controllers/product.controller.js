@@ -7,6 +7,7 @@ exports.list = async (req, res, next) => {
         const queryParams = req.query;
         const sortDirection = queryParams.sortDirection || "asc";
         const sortField = queryParams.sort;
+
         let postSort;
 
         const filteredParams = omit(
@@ -41,14 +42,13 @@ exports.list = async (req, res, next) => {
 
         const sortObject = {};
 
-        if (Array.isArray(sortField)) {
+        if (sortField && Array.isArray(sortField)) {
             const [field, value] = sortField;
             if (!isNaN(value)) sortObject[field] = value;
             else postSort = { field, value };
         } else {
             sortObject[sortField] = sortOrder;
         }
-        console.log(queryParams, sortObject);
 
         const tagValue = queryParams.tag;
         if (tagValue) {
@@ -104,6 +104,35 @@ exports.add = async (req, res, next) => {
         return res.json({
             success: true,
         });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.set = async (req, res, next) => {
+    try {
+        const result = await Product.updateOne(
+            { _id: req.params.id },
+            {
+                $set:
+                    req.body.status === "featured"
+                        ? { featured: true }
+                        : req.body.status === "removefeatured"
+                        ? { featured: false }
+                        : { status: req.body.status },
+            }
+        );
+
+        if (result.modifiedCount) {
+            return res.json({
+                success: true,
+            });
+        } else {
+            res.status(httpStatus.NOT_MODIFIED);
+            return res.json({
+                success: false,
+            });
+        }
     } catch (error) {
         return next(error);
     }

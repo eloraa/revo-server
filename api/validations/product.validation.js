@@ -22,9 +22,28 @@ module.exports = {
                 .required(),
         }),
     },
+    set: {
+        body: Joi.object({
+            email: Joi.string()
+                .email({ tlds: { allow: false } })
+                .required(),
+            uid: Joi.string().min(5).required(),
+            status: Joi.string().valid(
+                "approved",
+                "rejected",
+                "featured",
+                "removefeatured"
+            ),
+        }).unknown(true),
+    },
     status: {
         query: Joi.object({
-            status: Joi.string().valid("pending", "approved", "rejected", "all"),
+            status: Joi.string().valid(
+                "pending",
+                "approved",
+                "rejected",
+                "all"
+            ),
         }).unknown(true),
     },
 };

@@ -51,6 +51,10 @@ const productSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        featured: {
+            type: Boolean,
+            default: false,
+        },
         upvote: {
             type: Number,
             default: 0,
@@ -132,6 +136,7 @@ productSchema.method({
             "productLink",
             "status",
             "reported",
+            "featured",
             "tags",
             "upvote",
             "downvote",
