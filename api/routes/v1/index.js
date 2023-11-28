@@ -3,6 +3,7 @@ const router = express.Router();
 const authroute = require("./auth.route");
 const paymentroute = require("./payment.route");
 const productroute = require("./product.route");
+const couponroute = require("./coupon.route");
 
 /**
  * GET v1/status
@@ -24,5 +25,10 @@ router.use("/payment", paymentroute);
  * Product Routes
  */
 router.use("/product", productroute);
+
+/**
+ * Coupon Routes
+ */
+router.use("/coupons", couponroute);
 
 module.exports = router;
