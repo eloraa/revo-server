@@ -43,9 +43,9 @@ const productSchema = new mongoose.Schema(
             trim: true,
             required: true,
         },
-        approved: {
-            type: Boolean,
-            default: false,
+        status: {
+            type: String,
+            default: 'pending',
         },
         upvote: {
             type: Number,
@@ -126,7 +126,7 @@ productSchema.method({
             "productPhoto",
             "description",
             "productLink",
-            "approved",
+            "status",
             "tags",
             "upvote",
             "downvote",
