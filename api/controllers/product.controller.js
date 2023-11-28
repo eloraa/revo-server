@@ -102,14 +102,18 @@ exports.getOne = async (req, res, next) => {
         const product = (
             await Product.findOne({ _id: req.params.id }).populate("user")
         ).transform();
+
         if (
-            product.status === "approved" ||
-            (req.query.hasToken &&
-                product.user.email === req.auth.email &&
-                product.user.uid === req.auth.uid)
-        )
+            req.query.hasToken &&
+            product.user.email === req.auth.email &&
+            product.user.uid === req.auth.sub
+        ) {
             return res.json(product);
-        else return res.json(null);
+        } else if (product.status === "approved") {
+            return res.json(product);
+        } else {
+            return res.json(null);
+        }
     } catch (error) {
         next(error);
     }
@@ -122,6 +126,39 @@ exports.add = async (req, res, next) => {
         return res.json({
             success: true,
         });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.update = async (req, res, next) => {
+    try {
+        const result = await Product.updateOne(
+            {
+                _id: req.params.id,
+                email: req.body.email,
+                uid: req.body.uid,
+            },
+            omit(
+                req.body,
+                "email",
+                "uid",
+                "status",
+                "approved",
+                "featured",
+                "reported"
+            )
+        );
+        if (result.modifiedCount) {
+            return res.json({
+                success: true,
+            });
+        } else {
+            res.status(httpStatus.NOT_MODIFIED);
+            return res.json({
+                success: true,
+            });
+        }
     } catch (error) {
         return next(error);
     }

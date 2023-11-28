@@ -48,6 +48,11 @@ router
     .post(validate(product), authorize(LOGGED_USER), controller.add);
 
 router
+    .route("/update/:id")
+
+    .patch(validate(product), authorize(LOGGED_USER), controller.update);
+
+router
     .route("/:id")
 
     .delete(
