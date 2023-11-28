@@ -124,6 +124,27 @@ productSchema.pre("save", async function save(next) {
         return next(error);
     }
 });
+productSchema.pre("updateOne", async function (next) {
+    try {
+        const doc = await this.model.findOne(this.getQuery());
+
+        if (
+            this.getUpdate().$set &&
+            this.getUpdate().$set.featured === true &&
+            doc.status !== "approved"
+        ) {
+            return next(
+                new APIError({
+                    message:
+                        "Cannot set featured for a product that is not approved",
+                })
+            );
+        }
+        next();
+    } catch (error) {
+        return next(error);
+    }
+});
 
 productSchema.method({
     transform() {
@@ -151,7 +172,6 @@ productSchema.method({
         return transformed;
     },
 });
-
 
 // productSchema.post("find", async function (docs, next) {
 //     try {

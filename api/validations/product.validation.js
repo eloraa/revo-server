@@ -28,13 +28,10 @@ module.exports = {
                 .email({ tlds: { allow: false } })
                 .required(),
             uid: Joi.string().min(5).required(),
-            status: Joi.string().valid(
-                "approved",
-                "rejected",
-                "featured",
-                "removefeatured"
-            ),
-        }).unknown(true),
+            status: Joi.string()
+                .valid("approved", "rejected", "featured", "removefeatured")
+                .required(),
+        }),
     },
     status: {
         query: Joi.object({
