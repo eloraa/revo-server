@@ -24,7 +24,7 @@ module.exports = {
     },
     status: {
         query: Joi.object({
-            status: Joi.string().valid("pending", "approved", "rejected"),
+            status: Joi.string().valid("pending", "approved", "rejected", "all"),
         }).unknown(true),
     },
 };

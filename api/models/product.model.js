@@ -45,7 +45,11 @@ const productSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            default: 'pending',
+            default: "pending",
+        },
+        reported: {
+            type: Boolean,
+            default: false,
         },
         upvote: {
             type: Number,
@@ -127,6 +131,7 @@ productSchema.method({
             "description",
             "productLink",
             "status",
+            "reported",
             "tags",
             "upvote",
             "downvote",
@@ -141,6 +146,7 @@ productSchema.method({
         return transformed;
     },
 });
+
 
 // productSchema.post("find", async function (docs, next) {
 //     try {

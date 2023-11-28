@@ -86,7 +86,7 @@ const handleJWT = (req, res, next, roles, options) => async () => {
 const authenticate = (req, res, next, roles, options) => {
     if (roles === FORCE && validateSchema(req, options.schema))
         roles = options.roles;
-    else return next();
+    else if(options) return next();
 
     if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
@@ -108,7 +108,7 @@ exports.LOGGED_USER = NORMAL_USER;
 exports.FORCED = FORCE;
 
 exports.authorize =
-    (roles = User.roles, obj = {}) =>
+    (roles = User.roles, obj) =>
     (req, res, next) =>
         authenticate(
             req,
