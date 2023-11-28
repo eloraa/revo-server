@@ -43,4 +43,9 @@ module.exports = {
             ),
         }).unknown(true),
     },
+    token: {
+        query: Joi.object({
+            hasToken: Joi.boolean(),
+        }).unknown(true),
+    },
 };

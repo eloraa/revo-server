@@ -13,6 +13,7 @@ const {
     deletes,
     status,
     set,
+    token,
 } = require("../../validations/product.validation");
 const { get } = require("../../validations/auth.validation");
 
@@ -25,6 +26,15 @@ router
         authorize(FORCED, { roles: MODERATOR, schema: status }),
         validate(status),
         controller.list
+    );
+
+router
+    .route("/get/:id")
+
+    .get(
+        authorize(FORCED, { roles: LOGGED_USER, schema: token }),
+        validate(token),
+        controller.getOne
     );
 
 router

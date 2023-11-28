@@ -97,6 +97,19 @@ exports.get = async (req, res, next) => {
     }
 };
 
+exports.getOne = async (req, res, next) => {
+    try {
+        const product = (
+            await Product.findOne({ _id: req.params.id }).populate("user")
+        ).transform();
+        if (product.status === "approved" || req.query.hasToken)
+            return res.json(product);
+        else return res.json(null);
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.add = async (req, res, next) => {
     try {
         await new Product(req.body).save();
