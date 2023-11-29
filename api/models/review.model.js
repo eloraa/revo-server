@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const APIError = require("../errors/api-error");
-const httpStatus = require("http-status");
-const Vote = require("./vote.model");
+const Product = require("./product.model");
 
 const reviewSchema = new mongoose.Schema(
     {
@@ -82,6 +81,24 @@ reviewSchema.method({
 
         return transformed;
     },
+});
+
+reviewSchema.pre("save", async function save(next) {
+    try {
+        const doc = await Product.findById(this.productId);
+
+        if (doc.status !== "approved") {
+            return next(
+                new APIError({
+                    message: "You can't review a product that is not approved",
+                })
+            );
+        }
+
+        return next();
+    } catch (error) {
+        return next(error);
+    }
 });
 
 module.exports = mongoose.model("Review", reviewSchema);

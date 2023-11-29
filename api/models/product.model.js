@@ -155,6 +155,19 @@ productSchema.pre("updateOne", async function (next) {
         }
 
         if (
+            this.getUpdate().$inc &&
+            (this.getUpdate().$inc.upvote || this.getUpdate().$inc.downvote) &&
+            doc.status !== "approved"
+        ) {
+            return next(
+                new APIError({
+                    message:
+                        "Cannot vote a product that is not approved",
+                })
+            );
+        }
+
+        if (
             this.getUpdate().$set &&
             this.getUpdate().$set.reported === true &&
             doc.status !== "approved"
@@ -188,7 +201,7 @@ productSchema.pre("updateOne", async function (next) {
                 if (existingVote) {
                     return next(
                         new APIError({
-                            message: "User already voted this product.",
+                            message: "You already voted this product.",
                         })
                     );
                 }
@@ -196,7 +209,7 @@ productSchema.pre("updateOne", async function (next) {
                 if (doc.uid === auth.sub) {
                     return next(
                         new APIError({
-                            message: "User cannot vote on their own product.",
+                            message: "You cannot vote on their own product.",
                         })
                     );
                 }
