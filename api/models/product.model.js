@@ -81,8 +81,8 @@ productSchema.virtual("user", {
 
 productSchema.virtual("review", {
     ref: "Review",
-    localField: "uid",
-    foreignField: "uid",
+    localField: "_id",
+    foreignField: "productId",
 });
 
 productSchema.virtual("vote", {
