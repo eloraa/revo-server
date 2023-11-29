@@ -149,6 +149,7 @@ userSchema.method({
             iat: moment().unix(),
             email: this.email,
             sub: this.uid,
+            roles: this.role
         };
         return jwt.sign(payload, jwtSecret);
     },

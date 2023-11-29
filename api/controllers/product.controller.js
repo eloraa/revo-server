@@ -95,7 +95,6 @@ exports.list = async (req, res, next) => {
                 queryBuilder = queryBuilder.skip((page - 1) * limit);
             }
         } else if (limitValue) {
-            // Handle the case when pagination is not requested
             limit = parseInt(limitValue, 10);
             queryBuilder = queryBuilder.limit(limit);
         }
@@ -185,6 +184,8 @@ exports.getOne = async (req, res, next) => {
 
         if (
             req.query.hasToken &&
+            req.auth &&
+            (req.auth.roles === "admin" || req.auth.roles === "moderator") ||
             product.user.email === req.auth.email &&
             product.user.uid === req.auth.sub
         ) {
