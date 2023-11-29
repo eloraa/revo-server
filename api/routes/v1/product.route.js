@@ -73,4 +73,9 @@ router
 
     .patch(authorize(LOGGED_USER), validate(vote), controller.vote);
 
+router
+    .route("/report/:id")
+
+    .patch(authorize(LOGGED_USER), controller.report);
+
 module.exports = router;

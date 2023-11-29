@@ -14,12 +14,13 @@ exports.list = async (req, res, next) => {
             queryParams,
             "sort",
             "sortDirection",
-            "tag",
+            "tags",
             "uid",
             "email",
             "status",
             "limit",
-            "pagination"
+            "pagination",
+            "page"
         );
 
         const { userUID, userEmail } = req.params;
@@ -62,7 +63,7 @@ exports.list = async (req, res, next) => {
             sortObject[sortField] = sortOrder;
         }
 
-        const tagValue = queryParams.tag;
+        const tagValue = queryParams.tags;
         if (tagValue) {
             query.tags = {
                 $in: Array.isArray(tagValue) ? tagValue : [tagValue],
@@ -72,7 +73,8 @@ exports.list = async (req, res, next) => {
         let queryBuilder = Product.find(query)
             .sort(sortObject)
             .populate("user")
-            .populate("vote");
+            .populate("vote")
+            .populate("review");
 
         const paginationValue = queryParams.pagination;
         const limitValue = queryParams.limit;
@@ -151,7 +153,6 @@ exports.vote = async (req, res, next) => {
     try {
         const updateField = req.body.type === "upvote" ? "upvote" : "downvote";
 
-
         const result = await Product.updateOne(
             { _id: req.params.id },
             { $inc: { [updateField]: 1 } },
@@ -179,6 +180,7 @@ exports.getOne = async (req, res, next) => {
             await Product.findOne({ _id: req.params.id })
                 .populate("user")
                 .populate("vote")
+                .populate("review")
         ).transform();
 
         if (
@@ -275,6 +277,28 @@ exports.delete = async (req, res, next) => {
     try {
         const result = await Product.deleteOne({ _id: req.params.id });
         if (result.deletedCount) {
+            res.status(httpStatus.CREATED);
+            return res.json({
+                success: true,
+            });
+        } else {
+            res.status(httpStatus.NOT_MODIFIED);
+            return res.json({
+                success: false,
+            });
+        }
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.report = async (req, res, next) => {
+    try {
+        const result = await Product.updateOne(
+            { _id: req.params.id },
+            { $set: { reported: req.body.reported ? true : false } }
+        );
+        if (result.modifiedCount) {
             res.status(httpStatus.CREATED);
             return res.json({
                 success: true,

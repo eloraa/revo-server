@@ -79,6 +79,12 @@ productSchema.virtual("user", {
     justOne: true,
 });
 
+productSchema.virtual("review", {
+    ref: "Review",
+    localField: "uid",
+    foreignField: "uid",
+});
+
 productSchema.virtual("vote", {
     ref: "Vote",
     localField: "_id",
@@ -148,6 +154,18 @@ productSchema.pre("updateOne", async function (next) {
             );
         }
 
+        if (
+            this.getUpdate().$set &&
+            this.getUpdate().$set.reported === true &&
+            doc.status !== "approved"
+        ) {
+            return next(
+                new APIError({
+                    message: "Cannot report a product that is not approved",
+                })
+            );
+        }
+
         const auth = this.options?.auth;
         const { upvote, downvote } = this.getUpdate().$inc || {};
 
@@ -160,10 +178,11 @@ productSchema.pre("updateOne", async function (next) {
                     : null;
 
             if (voteType) {
+                // Check if the user has already voted
                 const existingVote = await Vote.findOne({
-                    productId: doc.id,
                     uid: auth.sub,
                     email: auth.email,
+                    productId: doc._id,
                 });
 
                 if (existingVote) {
@@ -174,6 +193,15 @@ productSchema.pre("updateOne", async function (next) {
                     );
                 }
 
+                if (doc.uid === auth.sub) {
+                    return next(
+                        new APIError({
+                            message: "User cannot vote on their own product.",
+                        })
+                    );
+                }
+
+                // Continue with voting logic
                 await handleVote(doc, voteType, auth.sub, auth.email);
             }
         } catch (err) {
@@ -188,8 +216,6 @@ productSchema.pre("updateOne", async function (next) {
 
 async function handleVote(product, voteType, uid, email) {
     const { _id } = product;
-
-    console.log("lelelel");
     await Vote.create({
         productId: _id,
         uid,
@@ -214,6 +240,7 @@ productSchema.method({
             "upvote",
             "downvote",
             "user",
+            "review",
             "vote",
             "createdAt",
         ];
@@ -283,6 +310,7 @@ productSchema.statics = {
             })
                 .populate("user")
                 .populate("vote")
+                .populate("review")
                 .exec();
         } catch (error) {
             throw error;
