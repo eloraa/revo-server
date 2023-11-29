@@ -71,7 +71,8 @@ exports.list = async (req, res, next) => {
 
         let queryBuilder = Product.find(query)
             .sort(sortObject)
-            .populate("user");
+            .populate("user")
+            .populate("vote");
 
         const paginationValue = queryParams.pagination;
         const limitValue = queryParams.limit;
@@ -146,10 +147,38 @@ exports.get = async (req, res, next) => {
     }
 };
 
+exports.vote = async (req, res, next) => {
+    try {
+        const updateField = req.body.type === "upvote" ? "upvote" : "downvote";
+
+
+        const result = await Product.updateOne(
+            { _id: req.params.id },
+            { $inc: { [updateField]: 1 } },
+            { auth: req.auth }
+        );
+
+        if (result.modifiedCount) {
+            return res.json({
+                success: true,
+            });
+        } else {
+            res.status(httpStatus.NOT_MODIFIED);
+            return res.json({
+                success: false,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.getOne = async (req, res, next) => {
     try {
         const product = (
-            await Product.findOne({ _id: req.params.id }).populate("user")
+            await Product.findOne({ _id: req.params.id })
+                .populate("user")
+                .populate("vote")
         ).transform();
 
         if (

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const APIError = require("../errors/api-error");
 const httpStatus = require("http-status");
+const Vote = require("./vote.model");
 
 const productSchema = new mongoose.Schema(
     {
@@ -78,6 +79,12 @@ productSchema.virtual("user", {
     justOne: true,
 });
 
+productSchema.virtual("vote", {
+    ref: "Vote",
+    localField: "_id",
+    foreignField: "productId",
+});
+
 productSchema.pre("save", async function save(next) {
     try {
         const pipeline = [
@@ -140,11 +147,56 @@ productSchema.pre("updateOne", async function (next) {
                 })
             );
         }
+
+        const auth = this.options?.auth;
+        const { upvote, downvote } = this.getUpdate().$inc || {};
+
+        try {
+            const voteType =
+                upvote && upvote > 0
+                    ? "upvote"
+                    : downvote && downvote > 0
+                    ? "downvote"
+                    : null;
+
+            if (voteType) {
+                const existingVote = await Vote.findOne({
+                    productId: doc.id,
+                    uid: auth.sub,
+                    email: auth.email,
+                });
+
+                if (existingVote) {
+                    return next(
+                        new APIError({
+                            message: "User already voted this product.",
+                        })
+                    );
+                }
+
+                await handleVote(doc, voteType, auth.sub, auth.email);
+            }
+        } catch (err) {
+            return next(err);
+        }
+
         next();
     } catch (error) {
         return next(error);
     }
 });
+
+async function handleVote(product, voteType, uid, email) {
+    const { _id } = product;
+
+    console.log("lelelel");
+    await Vote.create({
+        productId: _id,
+        uid,
+        email,
+        voteType,
+    });
+}
 
 productSchema.method({
     transform() {
@@ -162,6 +214,7 @@ productSchema.method({
             "upvote",
             "downvote",
             "user",
+            "vote",
             "createdAt",
         ];
 
@@ -229,6 +282,7 @@ productSchema.statics = {
                 email: options.email,
             })
                 .populate("user")
+                .populate("vote")
                 .exec();
         } catch (error) {
             throw error;

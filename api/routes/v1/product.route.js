@@ -14,6 +14,7 @@ const {
     status,
     set,
     token,
+    vote,
 } = require("../../validations/product.validation");
 const { get } = require("../../validations/auth.validation");
 
@@ -66,5 +67,10 @@ router
     .route("/set-status/:id")
 
     .patch(authorize(MODERATOR), validate(set), controller.set);
+
+router
+    .route("/vote/:id")
+
+    .patch(authorize(LOGGED_USER), validate(vote), controller.vote);
 
 module.exports = router;

@@ -48,4 +48,9 @@ module.exports = {
             hasToken: Joi.boolean(),
         }).unknown(true),
     },
+    vote: {
+        body: Joi.object({
+            type: Joi.string().valid("upvote", "downvote"),
+        }),
+    },
 };
