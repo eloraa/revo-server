@@ -6,6 +6,7 @@ const productroute = require("./product.route");
 const couponroute = require("./coupon.route");
 const newsletterroute = require("./newsletter.route");
 const reviewroute = require("./review.route");
+const statisticroute = require("./statistic.route");
 
 /**
  * GET v1/status
@@ -42,5 +43,10 @@ router.use("/review", reviewroute);
  * Newsletter Routes
  */
 router.use("/newsletter", newsletterroute);
+
+/**
+ * Statistics Routes
+ */
+router.use("/statistics", statisticroute);
 
 module.exports = router;
