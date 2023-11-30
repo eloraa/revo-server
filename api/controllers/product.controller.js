@@ -191,8 +191,8 @@ exports.getOne = async (req, res, next) => {
                 req.auth &&
                 (req.auth.roles === "admin" ||
                     req.auth.roles === "moderator")) ||
-            (product.user.email === req.auth.email &&
-                product.user.uid === req.auth.sub)
+            (product.user?.email === req.auth?.email &&
+                product.user?.uid === req.auth.sub)
         ) {
             return res.json(product);
         } else if (product.status === "approved") {
