@@ -49,8 +49,8 @@ const productSchema = new mongoose.Schema(
             default: "pending",
         },
         reported: {
-            type: Boolean,
-            default: false,
+            type: Number,
+            default: 0,
         },
         featured: {
             type: Boolean,
@@ -209,7 +209,7 @@ productSchema.pre("updateOne", async function (next) {
                 if (doc.uid === auth.sub) {
                     return next(
                         new APIError({
-                            message: "You cannot vote on their own product.",
+                            message: "You cannot vote on your own product.",
                         })
                     );
                 }

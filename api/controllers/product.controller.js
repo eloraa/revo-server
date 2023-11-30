@@ -302,7 +302,9 @@ exports.report = async (req, res, next) => {
     try {
         const result = await Product.updateOne(
             { _id: req.params.id },
-            { $set: { reported: req.body.reported ? true : false } }
+            req.body.reported
+                ? { $inc: { reported: 1 } }
+                : { $set: { reported: 0 } }
         );
         if (result.modifiedCount) {
             res.status(httpStatus.CREATED);
