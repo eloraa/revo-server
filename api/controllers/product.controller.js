@@ -65,8 +65,12 @@ exports.list = async (req, res, next) => {
 
         const tagValue = queryParams.tags;
         if (tagValue) {
+            const tagSearchRegexArray = Array.isArray(tagValue)
+                ? tagValue.map((tag) => new RegExp(tag, "i"))
+                : [new RegExp(tagValue, "i")];
+
             query.tags = {
-                $in: Array.isArray(tagValue) ? tagValue : [tagValue],
+                $in: tagSearchRegexArray,
             };
         }
 
@@ -183,11 +187,12 @@ exports.getOne = async (req, res, next) => {
         ).transform();
 
         if (
-            req.query.hasToken &&
-            req.auth &&
-            (req.auth.roles === "admin" || req.auth.roles === "moderator") ||
-            product.user.email === req.auth.email &&
-            product.user.uid === req.auth.sub
+            (req.query.hasToken &&
+                req.auth &&
+                (req.auth.roles === "admin" ||
+                    req.auth.roles === "moderator")) ||
+            (product.user.email === req.auth.email &&
+                product.user.uid === req.auth.sub)
         ) {
             return res.json(product);
         } else if (product.status === "approved") {
