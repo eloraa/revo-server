@@ -1,6 +1,10 @@
 const httpStatus = require("http-status");
 const Product = require("../models/product.model");
-const { omit, mapValues } = require("lodash");
+const { omit, mapValues, has } = require("lodash");
+const {
+    conditionMatch,
+    parseCondition,
+} = require("../../config/parseCondition");
 
 exports.list = async (req, res, next) => {
     try {
@@ -33,8 +37,18 @@ exports.list = async (req, res, next) => {
             filteredParams.email = userEmail;
         }
 
-        const query = mapValues(filteredParams, (value) => {
-            if (
+        const query = mapValues(filteredParams, (value, key) => {
+            if (key === "tags") {
+                const tagSearchRegexArray = Array.isArray(value)
+                    ? value.map((tag) => new RegExp(tag, "i"))
+                    : [new RegExp(value, "i")];
+
+                return {
+                    $in: tagSearchRegexArray,
+                };
+            } else if (conditionMatch(value)) {
+                return parseCondition(value, key);
+            } else if (
                 value.toLowerCase() === "true" ||
                 value.toLowerCase() === "false"
             ) {
@@ -45,7 +59,6 @@ exports.list = async (req, res, next) => {
                 return value;
             }
         });
-
         const statusValue = queryParams.status || "approved";
         if (statusValue !== "all") {
             query.status = statusValue;
@@ -74,6 +87,22 @@ exports.list = async (req, res, next) => {
             };
         }
 
+        const hasNestedOrAnd = Object.values(query).some((value) => {
+            return (value && value["$or"]) || (value && value["$and"]);
+        });
+        if (hasNestedOrAnd) {
+            Object.keys(query).forEach((key) => {
+                const value = query[key];
+
+                if (value && (value["$or"] || value["$and"])) {
+                    const operator = has(value, "$or") ? "$or" : "$and";
+                    query[operator] = value[operator].map((condition) => {
+                        return { [key]: condition };
+                    });
+                    delete query[key];
+                }
+            });
+        }
         let queryBuilder = Product.find(query)
             .sort(sortObject)
             .populate("user")
@@ -106,7 +135,6 @@ exports.list = async (req, res, next) => {
         let _products = await queryBuilder.exec();
 
         if (postSort) {
-            console.log(sortDirection);
             _products = _products.sort((a, b) => {
                 const sortOrder = sortDirection === "asc" ? 1 : -1;
                 if (a.status === b.status) {
